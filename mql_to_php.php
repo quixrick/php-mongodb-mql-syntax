@@ -44,6 +44,11 @@ class MqlObj {
 				$output = $cursor->toArray();
 				break;
 
+			// MATCH A `remove` QUERY
+			case (preg_match('~db\.[^.]+\.remove~', $this->command)):
+				$output = $this->mql_remove();
+				break;
+
 			default:
 				$output = "Unable to match a command with that name.";
 
@@ -79,6 +84,41 @@ class MqlObj {
 
 		$query = new MongoDB\Driver\Query($this->mql_find_helper_pattern(), array('limit' => 10));
 		$cursor = $manager->executeQuery($this->db.'.'.$this->collection, $query);
+
+
+
+		return $cursor;
+
+
+
+	}
+
+
+
+
+
+
+	public function mql_remove() {
+
+
+
+		preg_match('~^[^.]+\.(?<COLLECTION>[^.]+)\.remove\((?<PATTERN>(?:(?!(?:\)\.|\);|\)$)).)*)\)(?<OPERATIONS>.*)~i', $this->command, $matches_remove);
+
+		$this->collection = $matches_remove['COLLECTION'];
+		$this->pattern = $matches_remove['PATTERN'];
+		$this->operations = $matches_remove['OPERATIONS'];
+
+		$manager = $this->manager;
+
+
+
+
+
+
+		$query = new MongoDB\Driver\BulkWrite;
+		$query->delete($this->mql_find_helper_pattern(), array('limit' => 10));
+
+		$cursor = $manager->executeBulkWrite($this->db.'.'.$this->collection, $query);
 
 
 
